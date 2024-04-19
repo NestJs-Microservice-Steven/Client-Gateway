@@ -27,6 +27,6 @@ import { env } from 'src/config';
 export class ProductsModule {
 
   constructor(){
-    console.log(env)
+   
   }
 }

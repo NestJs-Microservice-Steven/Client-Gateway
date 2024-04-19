@@ -6,14 +6,20 @@ import * as joi from 'joi'
 
 interface EnvVars {
 	PORT: number
-	PRODUCTS_MICROSERICE_HOST:  string,
-	PRODUCTS_MICROSERICE_PORT: 	number,
+	PRODUCTS_MICROSERVICE_HOST: string,
+	PRODUCTS_MICROSERVICE_PORT: number,
+
+	ORDER_MICROSERVICE_HOST: string,
+	ORDER_MICROSERVICE_PORT: number,
 }
 
 const envsSchema = joi.object({
 	PORT: joi.number().required(),
-	PRODUCTS_MICROSERICE_HOST:  joi.string().required(),
-	PRODUCTS_MICROSERICE_PORT: joi.number().required()
+	PRODUCTS_MICROSERVICE_HOST:  joi.string().required(),
+	PRODUCTS_MICROSERVICE_PORT: joi.number().required(),
+	
+	ORDER_MICROSERVICE_HOST:  joi.string().required(),
+	ORDER_MICROSERVICE_PORT: joi.number().required()
 })
 .unknown(true);
 
@@ -28,6 +34,9 @@ const envVars: EnvVars = value;
 
 export const env = {
 	port: envVars.PORT,
-	productsMicroserviceHost: envVars.PRODUCTS_MICROSERICE_HOST,
-	productsMicroservicePort: envVars.PRODUCTS_MICROSERICE_PORT
+	productsMicroserviceHost: envVars.PRODUCTS_MICROSERVICE_HOST,
+	productsMicroservicePort: envVars.PRODUCTS_MICROSERVICE_PORT,
+
+	orderMicroserviceHost: envVars.ORDER_MICROSERVICE_HOST,
+	orderMicroservicePort: envVars.ORDER_MICROSERVICE_PORT
 }
