@@ -1,30 +1,84 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 
-import { ClientProxy } from '@nestjs/microservices';
-import { CreateOrderDto } from './dto';
-import { ORDER_SERVICE } from 'src/config';
-
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { CreateOrderDto, OrderPaginationDto, StatusDto } from './dto';
+import { NATS_SERVICE } from 'src/config';
+import { firstValueFrom } from 'rxjs';
+import { PaginationDto } from 'src/common';
 
 @Controller('orders')
 export class OrdersController {
   constructor(
-    @Inject(ORDER_SERVICE) private readonly orderClient: ClientProxy
+    @Inject(NATS_SERVICE) private readonly natsClient: ClientProxy,
   ) {}
-
-
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderClient.send( 'createOrder', createOrderDto)  }
-    
-  @Get()
-  findAll() {
-    return this.orderClient.send('findAllOrders', {})
+    return this.natsClient.send('createOrder', createOrderDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.orderClient.send('findOneOrder', {id})
+  @Get()
+  async findAll(@Query() orderPaginationDto: OrderPaginationDto) {
+
+    try{
+      return await this.natsClient.send('findAllOrders', orderPaginationDto);
+
+    }catch(error){}
+
+
+  }
+
+  @Get('id/:id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    try {
+      const order = await firstValueFrom(
+        this.natsClient.send('findOneOrder', { id }),
+      );
+
+      return order;
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  @Get(':status')
+  async findAllStatus(
+    @Param() statusDto: StatusDto,
+    @Query() PaginationDto: PaginationDto,
+  ) {
+    try {
+      //return {statusDto, PaginationDto};
+      return this.natsClient.send('findAllOrders', {
+        ...PaginationDto,
+        status: statusDto.status,
+      });
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  @Patch(':id')
+  changeStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() statusDto: StatusDto
+  ){
+    try{
+      return this.natsClient.send('changeOrderStatus', {id, status: statusDto.status});
+    }catch (error){
+      throw new RpcException(error);
+
+    }
   }
 
 }
